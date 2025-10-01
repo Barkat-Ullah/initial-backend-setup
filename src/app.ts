@@ -1,6 +1,4 @@
-import cors from 'cors';
-import express, { Application, NextFunction, Request, Response } from 'express';
-import httpStatus from 'http-status';
+import express, { Application } from 'express';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import router from './app/routes';
 import auth from './app/middlewares/auth';
@@ -9,12 +7,11 @@ import {
   apiLimiter,
   imageUpload,
   notFound,
-  rootHandler,
   serverHealth,
   setupMiddlewares,
 } from './shared';
-import catchAsync from './app/utils/catchAsync';
-import { prisma } from './app/utils/prisma';
+
+import { rootHandler } from './shared/rootHandler';
 // import { StripeWebHook } from './app/utils/StripeUtils';
 
 const app: Application = express();

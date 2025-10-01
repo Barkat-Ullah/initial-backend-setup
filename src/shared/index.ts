@@ -1,4 +1,4 @@
-import os from 'os';
+
 import express, { Application, NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import rateLimit from 'express-rate-limit';
@@ -9,38 +9,8 @@ import AppError from '../app/errors/AppError';
 import { uploadToDigitalOceanAWS } from '../app/utils/uploadToDigitalOceanAWS';
 import { prisma } from '../app/utils/prisma';
 
-export const rootHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const currentDateTime = new Date().toISOString();
-  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const serverHostname = os.hostname();
-  const serverPlatform = os.platform();
-  const serverUptime = os.uptime();
 
-  res.status(httpStatus.OK).json({
-    success: true,
-    message: '🚀 Welcome to this project',
-    version: '1.0.0',
-    clientDetails: {
-      ipAddress: clientIp,
-      accessedAt: currentDateTime,
-    },
-    serverDetails: {
-      hostname: serverHostname,
-      platform: serverPlatform,
-      uptime: `${Math.floor(serverUptime / 60 / 60)} hours ${Math.floor(
-        (serverUptime / 60) % 60,
-      )} minutes`,
-    },
-    developerContact: {
-      email: 'barkatullah585464@gmail.com',
-      website: 'https://barkat-rakib.vercel.app',
-    },
-  });
-};
+
 
 export const setupMiddlewares = (app: Application): void => {
   // CORS
