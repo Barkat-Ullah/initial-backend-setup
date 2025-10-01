@@ -27,7 +27,7 @@ const createModule = (moduleName: string): void => {
 import { ${capitalize(
           moduleName,
         )}Controller } from "./${moduleName}.controller";
-import validateRequest from "../../middleware/validateRequest";
+import validateRequest from "../../middlewares/validateRequest";
 import { ${capitalize(
           moduleName,
         )}Validation } from "./${moduleName}.validation";
@@ -37,6 +37,9 @@ const router = express.Router();
 router.get("/", ${capitalize(moduleName)}Controller.getAll${capitalize(
           moduleName,
         )});
+router.get("/my", ${capitalize(moduleName)}Controller.getMy${capitalize(
+          moduleName,
+        )});  
 router.get("/:id", ${capitalize(moduleName)}Controller.get${capitalize(
           moduleName,
         )}ById);
@@ -95,6 +98,20 @@ const getAll${capitalize(
   });
 });
 
+const getMy${capitalize(
+          moduleName,
+        )} = catchAsync(async (req: Request, res: Response) => {  
+  const result = await ${capitalize(moduleName)}Services.getMy${capitalize(
+    moduleName,
+  )}(req.user.id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Successfully retrieved my ${moduleName}",
+    data: result,
+  });
+});
+
 const get${capitalize(
           moduleName,
         )}ById = catchAsync(async (req: Request, res: Response) => {
@@ -148,6 +165,7 @@ const softDeleteIntoDb = catchAsync(async (req: Request, res: Response) => {
 export const ${capitalize(moduleName)}Controller = {
   createIntoDb,
   getAll${capitalize(moduleName)},
+  getMy${capitalize(moduleName)}, 
   get${capitalize(moduleName)}ById,
   updateIntoDb,
   deleteIntoDb,
@@ -159,13 +177,19 @@ export const ${capitalize(moduleName)}Controller = {
 import { Request } from "express";
 
 const createIntoDb = async (req:Request) => {
-  console.dir(data);
+
   return null;
 };
 
 const getAll${capitalize(moduleName)} = async (query: Record<string, any>) => {
   console.log(query);
   return [];
+};
+
+const getMy${capitalize(moduleName)} = async (userId: string) => {  
+ 
+  console.log('Fetching my ${moduleName} for user:', userId);
+  return []; 
 };
 
 const get${capitalize(moduleName)}ByIdFromDB = async (id: string) => {
@@ -191,6 +215,7 @@ const softDeleteIntoDb = async (id: string) => {
 export const ${capitalize(moduleName)}Services = {
   createIntoDb,
   getAll${capitalize(moduleName)},
+  getMy${capitalize(moduleName)}, 
   get${capitalize(moduleName)}ByIdFromDB,
   updateIntoDb,
   deleteIntoDb,
@@ -202,16 +227,14 @@ export const ${capitalize(moduleName)}Services = {
 
 const create${capitalize(moduleName)}ZodSchema = z.object({
   body: z.object({
-    // Example fields (customize as needed)
+  
     name: z.string({ required_error: "Name is required" }),
-   .............
   }),
 });
 
 const update${capitalize(moduleName)}ZodSchema = z.object({
   body: z.object({
     name: z.string().optional(),
-    ...............
   }),
 });
 
