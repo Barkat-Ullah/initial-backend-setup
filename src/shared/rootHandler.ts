@@ -33,6 +33,7 @@ export const rootHandler = (
       ).toFixed(2)} MB (${memoryUsagePercent}%)`
     : `${memoryUsagePercent}%`;
 
+    //fun facts
   const data = {
     message: `🚀 Welcome to this project. Server is running on port ${config.port}`,
     version: '1.0.0',
