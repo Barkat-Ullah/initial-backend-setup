@@ -51,7 +51,7 @@ import { prisma } from '../utils/prisma';
 
 const adminData = {
   fullName: 'Admin',
-  email: 'admin@gmail.com',
+  email: 'admin1@gmail.com',
   password: '123456',
   phoneNumber: '01821558090',
   role: UserRoleEnum.ADMIN,
@@ -78,10 +78,9 @@ const seedSuperAdmin = async () => {
       await prisma.user.create({
         data: adminData,
       });
-      console.log('Super Admin created successfully.');
+      console.log('✅ Super Admin created successfully.');
     } else {
-      return;
-      //   console.log("Super Admin already exists.");
+      console.log('❌ Super Admin already exists.');
     }
   } catch (error) {
     console.error('Error seeding Super Admin:', error);

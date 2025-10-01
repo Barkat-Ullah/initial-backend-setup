@@ -19,7 +19,7 @@ const clients = new Map<
 
 export async function setupWebSocket(server: Server) {
   const wss = new WebSocketServer({ server });
-  console.log('WebSocket server is running');
+
 
   wss.on('connection', (ws: ExtendedWebSocket) => {
     console.log('New user connected');

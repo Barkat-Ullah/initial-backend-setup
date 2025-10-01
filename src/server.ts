@@ -1,45 +1,69 @@
 import { createServer, Server as HTTPServer } from 'http';
 import app from './app';
 import config from './config';
-import seedSuperAdmin from './app/DB';
+
 import { setupWebSocket } from './app/middlewares/webSocket';
+// import seedSuperAdmin from './app/DB';
 
 const port = config.port || 5000;
 
+// Declare server outside main to make it accessible globally
+let server: HTTPServer | undefined;
+
 async function main() {
-  const server: HTTPServer = createServer(app);
+  server = createServer(app);
 
-  server.listen(port, async () => {
-    console.log('Server is running on port ', port);
-    seedSuperAdmin();
+  try {
+    // Seed data (await to ensure completion before listen)
+    // console.log('🌱 Seeding super admin data...');
+    // await seedSuperAdmin();
+ 
+    console.log(`🚀 Starting server on port ${port}...`);
+    server.listen(port, () => {
+      console.log(`✅ Server is running on port ${port}`);
+    });
 
-    try {
-      await setupWebSocket(server);
-    } catch (error) {
-      console.error('Failed to setup WebSocket:', error);
-      // Optionally close server on failure
-      server.close(() => process.exit(1));
-    }
-  });
-
-  const exitHandler = () => {
-    if (server) {
-      server.close(() => {
-        console.info('Server closed!');
-      });
-    }
+    // WebSocket setup (after listen)
+    console.log('🔌 Setting up WebSocket...');
+    await setupWebSocket(server);
+    console.log('✅ WebSocket setup complete!');
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
-  };
-
-  process.on('uncaughtException', error => {
-    console.log(error);
-    exitHandler();
-  });
-
-  process.on('unhandledRejection', error => {
-    console.log(error);
-    exitHandler();
-  });
+  }
 }
+
+// Graceful shutdown (improved: handle SIGINT/SIGTERM)
+const gracefulShutdown = (signal: string) => {
+  console.log(`🛑 Received ${signal}. Closing server...`);
+  if (server) {
+    // Null check
+    server.close(err => {
+      if (err) {
+        console.error('⚠️ Server close error:', err);
+        process.exit(1);
+      }
+      console.log('✅ Server closed successfully');
+      process.exit(0);
+    });
+  } else {
+    console.log('ℹ️ No server to close');
+    process.exit(0);
+  }
+};
+
+// Event listeners
+process.on('uncaughtException', error => {
+  console.error('💥 Uncaught Exception:', error);
+  gracefulShutdown('uncaughtException');
+});
+
+process.on('unhandledRejection', error => {
+  console.error('💥 Unhandled Rejection:', error);
+  gracefulShutdown('unhandledRejection');
+});
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 main();
