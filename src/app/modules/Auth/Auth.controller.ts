@@ -38,15 +38,7 @@ const logoutUser = catchAsync(async (req, res) => {
   });
 });
 
-const verifyEmailWithOtp = catchAsync(async (req, res) => {
-  const result = await AuthServices.verifyEmailWithOtp(req.body);
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    message: 'Email Verified Successfully',
-    data: result,
-  });
-});
 
 const resendVerificationWithOtp = catchAsync(async (req, res) => {
   const email = req.body.email;
@@ -80,8 +72,9 @@ const forgetPassword = catchAsync(async (req, res) => {
   });
 });
 
-const verifyForgotPassOtp = catchAsync(async (req, res) => {
-  const result = await AuthServices.verifyForgotPassOtp(req.body);
+
+const verifyOtpCommon = catchAsync(async (req, res) => {
+  const result = await AuthServices.verifyOtpCommon(req.body);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -105,10 +98,9 @@ export const AuthControllers = {
   loginWithOtp,
   registerWithOtp,
   logoutUser,
-  verifyEmailWithOtp,
   resendVerificationWithOtp,
   changePassword,
   forgetPassword,
-  verifyForgotPassOtp,
+  verifyOtpCommon,
   resetPassword,
 };

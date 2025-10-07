@@ -1,47 +1,39 @@
+import sendOtpViaMail, { generateOtpEmail } from './../../utils/sendMail';
 import * as bcrypt from 'bcrypt';
 import httpStatus from 'http-status';
 import { Secret, SignOptions } from 'jsonwebtoken';
 import config from '../../../config';
 import AppError from '../../errors/AppError';
 import { User, UserRoleEnum, UserStatus } from '@prisma/client';
-import { sendOtpViaMail } from '../../utils/sendMail';
 import { Response } from 'express';
 import {
-  generateOTP,
   getOtpStatusMessage,
   otpExpiryTime,
+  generateOTP,
 } from '../../utils/otp';
-
-import { verifyOtp } from '../../utils/verifyOtp';
 import sendResponse from '../../utils/sendResponse';
 import { generateToken } from '../../utils/generateToken';
 import { insecurePrisma, prisma } from '../../utils/prisma';
-import emailSender, { generateOtpEmail } from '../../utils/spainXotp';
+import emailSender from './../../utils/sendMail';
 
-
+// ======================== LOGIN WITH OTP ========================
 const loginWithOtpFromDB = async (
   res: Response,
-  payload: {
-    email: string;
-    password: string;
-  },
+  payload: { email: string; password: string },
 ) => {
   const userData = await insecurePrisma.user.findUniqueOrThrow({
-    where: {
-      email: payload.email,
-    },
+    where: { email: payload.email },
   });
-  const isCorrectPassword: Boolean = await bcrypt.compare(
+
+  const isCorrectPassword = await bcrypt.compare(
     payload.password,
     userData.password,
   );
-
-  if (!isCorrectPassword) {
+  if (!isCorrectPassword)
     throw new AppError(httpStatus.BAD_REQUEST, 'Password incorrect');
-  }
 
   if (userData.role !== UserRoleEnum.ADMIN && !userData.isEmailVerified) {
-    const otp = generateOTP();
+    const otp = generateOTP().toString();
 
     await prisma.user.update({
       where: { email: userData.email },
@@ -50,11 +42,12 @@ const loginWithOtpFromDB = async (
         otpExpiry: otpExpiryTime(),
       },
     });
-    sendOtpViaMail(payload.email, otp);
+
+    sendOtpViaMail(payload.email, otp, 'OTP Verification');
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
-      message: ' Please check your email for the verification OTP.',
+      message: 'Please check your email for the verification OTP.',
       data: '',
     });
   } else {
@@ -68,41 +61,38 @@ const loginWithOtpFromDB = async (
       config.jwt.access_secret as Secret,
       config.jwt.access_expires_in as SignOptions['expiresIn'],
     );
+
     return {
       id: userData.id,
       name: userData.fullName,
       email: userData.email,
       role: userData.role,
-      accessToken: accessToken,
+      accessToken,
     };
   }
 };
 
+// ======================== REGISTER WITH OTP ========================
 const registerWithOtpIntoDB = async (payload: User) => {
-  const hashedPassword: string = await bcrypt.hash(payload.password, 12);
+  const hashedPassword = await bcrypt.hash(payload.password, 12);
 
-  // Email check
-  const isUserExistWithTheGmail = await prisma.user.findUnique({
+  const isUserExist = await prisma.user.findUnique({
     where: { email: payload.email },
-    select: { id: true, email: true },
+    select: { id: true },
   });
 
-  if (isUserExistWithTheGmail?.id) {
+  if (isUserExist)
     throw new AppError(httpStatus.CONFLICT, 'User already exists');
-  }
 
-  // OTP generate (number)
-  const otp: number = Math.floor(100000 + Math.random() * 900000);
-  const userData: User = {
-    ...payload,
-    password: hashedPassword,
-    otp: otp.toString(),
-    otpExpiry: otpExpiryTime(),
-  };
+  const otp = generateOTP().toString();
 
   const newUser = await prisma.user.create({
-    data: userData,
-   
+    data: {
+      ...payload,
+      password: hashedPassword,
+      otp,
+      otpExpiry: otpExpiryTime(),
+    },
   });
 
   try {
@@ -118,137 +108,9 @@ const registerWithOtpIntoDB = async (payload: User) => {
   return 'Please check mail to verify your email';
 };
 
-// const registerWithOtpIntoDB = async (
-//   payload: User & { subscriptionType: SubscriptionType },
-// ) => {
-//   const hashedPassword: string = await bcrypt.hash(payload.password, 12);
-
-//   // Email check
-//   const isUserExistWithTheGmail = await prisma.user.findUnique({
-//     where: { email: payload.email },
-//     select: { id: true, email: true },
-//   });
-
-//   if (isUserExistWithTheGmail?.id) {
-//     throw new AppError(httpStatus.CONFLICT, 'User already exists');
-//   }
-
-//   // OTP generate (number)
-//   const otp: number = Math.floor(100000 + Math.random() * 900000);
-//   const userData: User = {
-//     ...payload,
-//     password: hashedPassword,
-//     otp: otp.toString(),
-//     otpExpiry: otpExpiryTime(),
-//   };
-
-//   // TODO: Check subscription type
-//   if (payload.subscriptionType === SubscriptionType.FREE) {
-//     // Free subscription - direct create user with subscription
-//     const freeSubscription = await prisma.subscription.findFirst({
-//       where: { subscriptionType: SubscriptionType.FREE },
-//     });
-
-//     const newUser = await prisma.user.create({
-//       data: {
-//         ...userData,
-//         subscriptionId: freeSubscription?.id,
-//       },
-//       include: { subscription: true },
-//     });
-
-//     try {
-//       const html = generateOtpEmail(otp);
-//       await emailSender(newUser.email, html, 'OTP Verification');
-//     } catch {
-//       throw new AppError(
-//         httpStatus.INTERNAL_SERVER_ERROR,
-//         'Failed to send OTP email',
-//       );
-//     }
-
-//     return 'Please check mail to verify your email';
-//   } else {
-//     // Monthly or Yearly subscription
-//     // TODO: Create user first
-//     const newUser = await prisma.user.create({
-//       data: userData,
-//     });
-
-//     // TODO: Create payment record for the subscription
-//     const subscription = await prisma.subscription.findFirst({
-//       where: { subscriptionType: payload.subscriptionType },
-//     });
-
-//     if (!subscription) {
-//       throw new AppError(httpStatus.BAD_REQUEST, 'Subscription not found');
-//     }
-
-//     await prisma.payment.create({
-//       data: {
-//         userId: newUser.id,
-//         subscriptionId: subscription.id,
-//         amount: subscription.price,
-//         currency: 'usd', // TODO: could be dynamic if needed
-//         status: PaymentStatus.PENDING, // payment pending initially
-//       },
-//     });
-
-//     try {
-//       const html = generateOtpEmail(otp);
-//       await emailSender(newUser.email, html, 'OTP Verification');
-//     } catch {
-//       throw new AppError(
-//         httpStatus.INTERNAL_SERVER_ERROR,
-//         'Failed to send OTP email',
-//       );
-//     }
-
-//     return 'User registered. Please check mail to verify your email and complete payment';
-//   }
-// };
-
-const verifyEmailWithOtp = async (payload: { email: string; otp: string }) => {
-  const { userData } = await verifyOtp(payload);
-  await prisma.user.update({
-    where: {
-      email: userData.email,
-    },
-    data: {
-      otp: null,
-      otpExpiry: null,
-      isEmailVerified: true,
-    },
-    select: {
-      id: true,
-    },
-  });
-
-  const accessToken = await generateToken(
-    {
-      id: userData.id,
-      name: userData.fullName,
-      email: userData.email,
-      role: userData.role,
-    },
-    config.jwt.access_secret as Secret,
-    config.jwt.access_expires_in as SignOptions['expiresIn'],
-  );
-  return {
-    id: userData.id,
-    name: userData.fullName,
-    email: userData.email,
-    role: userData.role,
-    accessToken: accessToken,
-  };
-};
-
+// ======================== RESEND OTP ========================
 const resendVerificationWithOtp = async (email: string) => {
-  const user = await insecurePrisma.user.findFirstOrThrow({
-    where: {
-      email,
-    },
-  });
+  const user = await insecurePrisma.user.findFirstOrThrow({ where: { email } });
 
   if (user.status === UserStatus.SUSPENDED) {
     throw new AppError(httpStatus.FORBIDDEN, 'User is Suspended');
@@ -258,19 +120,16 @@ const resendVerificationWithOtp = async (email: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Email is already verified');
   }
 
-  const otp = generateOTP();
+  const otp = generateOTP().toString();
   const expiry = otpExpiryTime();
 
   await prisma.user.update({
     where: { email },
-    data: {
-      otp,
-      otpExpiry: expiry,
-    },
+    data: { otp, otpExpiry: expiry },
   });
 
   try {
-    await sendOtpViaMail(email, otp);
+    await sendOtpViaMail(email, otp, 'OTP Verification');
   } catch {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
@@ -283,56 +142,40 @@ const resendVerificationWithOtp = async (email: string) => {
   };
 };
 
+// ======================== CHANGE PASSWORD ========================
 const changePassword = async (user: any, payload: any) => {
   const userData = await insecurePrisma.user.findUniqueOrThrow({
-    where: {
-      email: user.email,
-      status: 'ACTIVE',
-    },
+    where: { email: user.email, status: 'ACTIVE' },
   });
 
-  const isCorrectPassword: boolean = await bcrypt.compare(
+  const isCorrectPassword = await bcrypt.compare(
     payload.oldPassword,
     userData.password,
   );
+  if (!isCorrectPassword)
+    throw new AppError(httpStatus.BAD_REQUEST, 'Password incorrect!');
 
-  if (!isCorrectPassword) {
-    throw new Error('Password incorrect!');
-  }
-
-  const hashedPassword: string = await bcrypt.hash(payload.newPassword, 12);
+  const hashedPassword = await bcrypt.hash(payload.newPassword, 12);
 
   await prisma.user.update({
-    where: {
-      id: userData.id,
-    },
-    data: {
-      password: hashedPassword,
-    },
+    where: { id: userData.id },
+    data: { password: hashedPassword },
   });
 
-  return {
-    message: 'Password changed successfully!',
-  };
+  return { message: 'Password changed successfully!' };
 };
 
+// ======================== FORGOT PASSWORD ========================
 const forgetPassword = async (email: string) => {
   const userData = await prisma.user.findUniqueOrThrow({
-    where: {
-      email,
-    },
-    select: {
-      email: true,
-      status: true,
-      id: true,
-      otpExpiry: true,
-      otp: true,
-    },
+    where: { email },
+    select: { email: true, status: true, id: true, otpExpiry: true, otp: true },
   });
 
   if (userData.status === UserStatus.SUSPENDED) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'User has suspended');
+    throw new AppError(httpStatus.BAD_REQUEST, 'User has been suspended');
   }
+
   if (
     userData.otp &&
     userData.otpExpiry &&
@@ -341,27 +184,24 @@ const forgetPassword = async (email: string) => {
     const message = getOtpStatusMessage(userData.otpExpiry);
     throw new AppError(httpStatus.CONFLICT, message);
   }
-  const otp: number = Math.floor(100000 + Math.random() * 900000);
+
+  const otp = generateOTP().toString();
   const expireTime = otpExpiryTime();
+
   try {
     await prisma.$transaction(async tx => {
       await tx.user.update({
         where: { email },
-        data: {
-          otp: otp.toString(),
-          otpExpiry: expireTime,
-        },
+        data: { otp, otpExpiry: expireTime },
       });
+
       try {
         const html = generateOtpEmail(otp);
         await emailSender(userData.email, html, 'OTP Verification');
-      } catch (emailErr) {
+      } catch {
         await tx.user.update({
           where: { email },
-          data: {
-            otp: null,
-            otpExpiry: null,
-          },
+          data: { otp: null, otpExpiry: null },
         });
         throw new AppError(
           httpStatus.INTERNAL_SERVER_ERROR,
@@ -369,78 +209,80 @@ const forgetPassword = async (email: string) => {
         );
       }
     });
-  } catch (error) {
+  } catch {
     throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send OTP');
   }
 };
 
-const verifyForgotPassOtp = async (payload: { email: string; otp: string }) => {
+// ======================== COMMON OTP VERIFY (REGISTER + FORGOT) ========================
+const verifyOtpCommon = async (payload: { email: string; otp: string }) => {
   const user = await prisma.user.findUnique({
     where: { email: payload.email },
     select: {
+      id: true,
+      email: true,
       otp: true,
       otpExpiry: true,
+      isEmailVerified: true,
     },
   });
 
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
-  }
+  if (!user) throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
 
   if (
+    !user.otp ||
     user.otp !== payload.otp ||
     !user.otpExpiry ||
-    user.otpExpiry < new Date()
+    new Date(user.otpExpiry).getTime() < Date.now()
   ) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid OTP');
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid or expired OTP');
   }
 
-  await prisma.user.update({
-    where: {
-      email: payload.email,
-    },
-    data: {
-      otp: null,
-      otpExpiry: null,
-    },
-  });
+  let message = 'OTP verified successfully!';
 
-  return { message: 'OTP verification successful' };
+  // Registration case
+  if (!user.isEmailVerified) {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { otp: null, otpExpiry: null, isEmailVerified: true },
+    });
+    message = 'Email verified successfully!';
+  } else {
+    // Forgot password case
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { otp: null, otpExpiry: null },
+    });
+    message = 'OTP verified for password reset!';
+  }
+
+  return { message };
 };
 
+// ======================== RESET PASSWORD ========================
 const resetPassword = async (payload: { password: string; email: string }) => {
-  // Check if the user exists
   const user = await prisma.user.findUnique({
     where: { email: payload.email },
   });
+  if (!user) throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
 
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
-  }
-
-  // Hash the new password
   const hashedPassword = await bcrypt.hash(payload.password, 10);
 
-  // Update the user's password in the database
   await prisma.user.update({
     where: { email: payload.email },
-    data: {
-      password: hashedPassword,
-      otp: null,
-      otpExpiry: null,
-    },
+    data: { password: hashedPassword, otp: null, otpExpiry: null },
   });
 
   return { message: 'Password reset successfully' };
 };
 
+// ======================== EXPORT ========================
 export const AuthServices = {
   loginWithOtpFromDB,
   registerWithOtpIntoDB,
-  verifyEmailWithOtp,
   resendVerificationWithOtp,
   changePassword,
   forgetPassword,
-  verifyForgotPassOtp,
   resetPassword,
+  verifyOtpCommon,
 };

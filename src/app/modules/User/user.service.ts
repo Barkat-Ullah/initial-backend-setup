@@ -2,7 +2,7 @@ import httpStatus from 'http-status';
 import { User, UserRoleEnum, UserStatus } from '@prisma/client';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { prisma } from '../../utils/prisma';
-import { deleteFile, uploadSingleFile } from '../../utils/uploadFiles';
+
 import { Request } from 'express';
 import AppError from '../../errors/AppError';
 import { uploadToDigitalOceanAWS } from '../../utils/uploadToDigitalOceanAWS';
@@ -20,7 +20,6 @@ const getAllUsersFromDB = async (query: any) => {
     .fields()
     .exclude()
     .paginate()
-    .include({ subscription: true })
     .execute();
   return result;
 };
@@ -50,80 +49,19 @@ const getMyProfileFromDB = async (id: string) => {
 };
 
 const getUserDetailsFromDB = async (id: string) => {
-  const user = await prisma.user.findUniqueOrThrow({
+  const user = await prisma.user.findUnique({
     where: { id },
-    // select: {
-    //   id: true,
-    //   fullName: true,
-    //   email: true,
-    //   role: true,
-    //   createdAt: true,
-    //   updatedAt: true,
-    //   profile: true,
-    // },
-  });
-  return user;
-};
-
-const updateProfileImg = async (
-  id: string,
-  previousImg: string,
-  req: Request,
-  file: Express.Multer.File | undefined,
-) => {
-  if (file) {
-    const location = uploadToDigitalOceanAWS(file);
-
-    const result = await prisma.user.update({
-      where: {
-        id,
-      },
-      data: {
-        profile: (await location).Location,
-      },
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        profile: true,
-      },
-    });
-    if (previousImg) {
-      deleteFile(previousImg);
-    }
-    req.user.profile = location;
-    return result;
-  }
-  throw new AppError(httpStatus.NOT_FOUND, 'Please provide image');
-};
-
-const updateMyProfileIntoDB = async (
-  id: string,
-
-  payload: Partial<User>,
-) => {
-  delete payload.email;
-
-  const result = await prisma.user.update({
-    where: {
-      id,
-    },
-    data: payload,
     select: {
       id: true,
       fullName: true,
       email: true,
-      phoneNumber: true,
       role: true,
-      status: true,
-      describe: true,
-      city: true,
-      address: true,
       profile: true,
     },
   });
-  return result;
+  return user;
 };
+
 
 const updateUserRoleStatusIntoDB = async (id: string, role: UserRoleEnum) => {
   const result = await prisma.user.update({
@@ -234,10 +172,8 @@ export const UserServices = {
   getAllUsersFromDB,
   getMyProfileFromDB,
   getUserDetailsFromDB,
-  updateMyProfileIntoDB,
   updateUserRoleStatusIntoDB,
   updateUserStatus,
-  updateProfileImg,
   updateUserApproval,
   softDeleteUserIntoDB,
   hardDeleteUserIntoDB,

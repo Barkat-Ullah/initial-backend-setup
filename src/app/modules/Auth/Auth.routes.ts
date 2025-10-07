@@ -20,10 +20,7 @@ router.post(
 router.post('/register', clientInfoParser, AuthControllers.registerWithOtp);
 router.post('/logout', AuthControllers.logoutUser);
 
-router.post(
-  '/verify-email-with-otp',
-  AuthControllers.verifyEmailWithOtp,
-);
+router.post('/verify-email-with-otp', AuthControllers.verifyOtpCommon);
 
 router.post(
   '/resend-verification-with-otp',
@@ -41,12 +38,6 @@ router.post(
   '/forget-password',
   validateRequest.body(authValidation.forgetPasswordValidationSchema),
   AuthControllers.forgetPassword,
-);
-
-router.post(
-  '/forget-password/verify-otp',
-  validateRequest.body(authValidation.verifyOtpValidationSchema),
-  AuthControllers.verifyForgotPassOtp,
 );
 
 router.post(

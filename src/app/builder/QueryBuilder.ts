@@ -88,26 +88,6 @@ class QueryBuilder<
     return this;
   }
 
-  //optional include
-  include(data: any) {
-    if (data) {
-      this.prismaQuery.include = {
-        ...this.prismaQuery.include,
-        ...data,
-      };
-    }
-    return this;
-  }
-  //optional select
-  select(data: any) {
-    if (data) {
-      this.prismaQuery.select = {
-        ...this.prismaQuery.select,
-        ...data,
-      };
-    }
-    return this;
-  }
 
   where(conditions: Record<string, unknown>) {
     this.prismaQuery.where = {

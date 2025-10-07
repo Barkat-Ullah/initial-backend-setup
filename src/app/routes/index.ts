@@ -1,9 +1,6 @@
 import express from 'express';
-
 import { MessageRouters } from '../modules/Messages/message.route';
 import { NotificationsRouters } from '../modules/Notification/notification.route';
-
-import { AssetRouters } from '../modules/Asset/asset.route';
 import { AuthRouters } from '../modules/Auth/Auth.routes';
 import { UserRouters } from '../modules/User/user.routes';
 import { PaymentRoutes } from '../modules/Payment/payment.route';
@@ -35,10 +32,6 @@ const moduleRoutes = [
   {
     path: '/notifications',
     route: NotificationsRouters,
-  },
-  {
-    path: '/assets',
-    route: AssetRouters,
   },
 ];
 

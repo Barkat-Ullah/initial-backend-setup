@@ -36,39 +36,7 @@ const getUserDetails = catchAsync(async (req, res) => {
   });
 });
 
-// Update profile fields
-const updateMyProfile = catchAsync(async (req: Request, res) => {
-  const id = req.user.id;
-  const payload = req.body;
 
-  const result = await UserServices.updateMyProfileIntoDB(id, payload);
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    message: 'User profile updated successfully',
-    data: result,
-  });
-});
-
-// Update profile image
-const updateProfileImage = catchAsync(async (req: Request, res) => {
-  const id = req.user.id;
-  const file = req.file;
-  const previousImg = req.user.profile || '';
-
-  const result = await UserServices.updateProfileImg(
-    id,
-    previousImg,
-    req,
-    file,
-  );
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    message: 'Profile image updated successfully',
-    data: result,
-  });
-});
 
 const updateUserRoleStatus = catchAsync(async (req, res) => {
   const { id } = req.params;
@@ -130,8 +98,6 @@ export const UserControllers = {
   getAllUsers,
   getMyProfile,
   getUserDetails,
-  updateMyProfile,
-  updateProfileImage,
   updateUserRoleStatus,
   updateUserStatus,
   updateUserApproval,

@@ -11,7 +11,7 @@ export const upload = multer({
 });
 
 // upload single image
-const uploadSingle = upload.single('image');
+const uploadSingle = upload.single('file');
 
 // upload multiple image
 const uploadMultiple = upload.fields([

@@ -1,7 +1,8 @@
 export function generateOTP(): string {
-    const otp = Math.floor(Math.random() * 1000000);
-    return otp.toString().padStart(6, '0');
+    const otp:number = Math.floor(Math.random() * 1000);
+    return otp.toString().padStart(4, '0');
 }
+
 export function otpExpiryTime() {
     const currentTime = Date.now();
     const expiryTime = currentTime + 5 * 60 * 1000;
