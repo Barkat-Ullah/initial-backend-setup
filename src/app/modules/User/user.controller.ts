@@ -94,6 +94,32 @@ const hardDeleteUser = catchAsync(async (req, res) => {
   });
 });
 
+const updateUser = catchAsync(async (req, res) => {
+  const id = req.params.id;
+  const result = await UserServices.updateUserIntoDb(req, id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User updated successfully!',
+    data: result,
+  });
+});
+
+const updateMyProfile = catchAsync(async (req, res) => {
+  const id = req.user.id;
+  const file = req.file;
+  const payload = JSON.parse(req.body.data);
+  const result = await UserServices.updateMyProfileIntoDB(id, file, payload);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Profile updated successfully',
+    data: result,
+  });
+});
+
+
 export const UserControllers = {
   getAllUsers,
   getMyProfile,
@@ -103,4 +129,6 @@ export const UserControllers = {
   updateUserApproval,
   softDeleteUser,
   hardDeleteUser,
+  updateUser,
+  updateMyProfile,
 };

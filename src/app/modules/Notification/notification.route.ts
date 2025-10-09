@@ -17,7 +17,7 @@ NotificationsRouters.get(
 // Get all users by a specific notification ID
 NotificationsRouters.get(
   '/users/:notificationId',
-  auth('SUPERADMIN'),
+  auth('ADMIN'),
   notificationsControllers.getUsersByNotification,
 );
 

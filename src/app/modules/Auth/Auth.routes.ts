@@ -1,8 +1,6 @@
 import express from 'express';
 import validateRequest from '../../middlewares/validateRequest';
-
 import auth from '../../middlewares/auth';
-
 import { UserRoleEnum } from '@prisma/client';
 import { authValidation } from './Auth.validation';
 import { AuthControllers } from './Auth.controller';
@@ -24,7 +22,6 @@ router.post('/verify-email-with-otp', AuthControllers.verifyOtpCommon);
 
 router.post(
   '/resend-verification-with-otp',
-  validateRequest.body(authValidation.forgetPasswordValidationSchema),
   AuthControllers.resendVerificationWithOtp,
 );
 

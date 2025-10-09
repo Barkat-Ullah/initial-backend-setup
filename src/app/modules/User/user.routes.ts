@@ -4,12 +4,13 @@ import { UserControllers } from './user.controller';
 import validateRequest from '../../middlewares/validateRequest';
 import { userValidation } from './user.validation';
 import { UserRoleEnum } from '@prisma/client';
+import { upload } from '../../utils/fileUploader';
 
 const router = express.Router();
 
 router.get(
   '/',
-  auth((UserRoleEnum.ADMIN, UserRoleEnum.USER)),
+  auth(UserRoleEnum.ADMIN, UserRoleEnum.USER),
   UserControllers.getAllUsers,
 );
 router.get(
@@ -44,6 +45,21 @@ router.put(
   '/approve-user',
   auth(UserRoleEnum.ADMIN),
   UserControllers.updateUserApproval,
+);
+
+router.put(
+  '/update-user/:id',
+  upload.single('file'),
+  auth(UserRoleEnum.ADMIN),
+  validateRequest.body(userValidation.updateUser),
+  UserControllers.updateUser,
+);
+
+router.put(
+  '/update-profile',
+  auth(UserRoleEnum.ADMIN, UserRoleEnum.USER),
+  upload.single('file'),
+  UserControllers.updateMyProfile,
 );
 
 export const UserRouters = router;

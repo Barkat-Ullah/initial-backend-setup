@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import config from '../../config';
 export const generateOtpEmail = (otp: string) => {
   return `
       <div style="font-family: Arial, sans-serif; color: #333; padding: 30px; background: linear-gradient(135deg, #6c63ff, #3f51b5); border-radius: 8px;">

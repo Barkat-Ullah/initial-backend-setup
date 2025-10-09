@@ -87,8 +87,8 @@ const getAllNotificationsByUser = async (
       userId: true,
       user: {
         select: {
-          firstName: true,
-          lastName: true,
+          fullName: true,
+        
           email: true,
           role: true
         }

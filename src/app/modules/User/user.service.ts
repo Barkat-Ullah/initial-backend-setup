@@ -12,7 +12,7 @@ interface UserWithOptionalPassword extends Omit<User, 'password'> {
 }
 const getAllUsersFromDB = async (query: any) => {
   const usersQuery = new QueryBuilder<typeof prisma.user>(prisma.user, query);
-
+  usersQuery.where({ role: 'USER' });
   const result = await usersQuery
     .search(['fullName', 'email', 'address', 'city'])
     .filter()
@@ -40,8 +40,7 @@ const getMyProfileFromDB = async (id: string) => {
       city: true,
       address: true,
       profile: true,
-      clientInfo:true
-  
+      clientInfo: true,
     },
   });
 
@@ -55,13 +54,18 @@ const getUserDetailsFromDB = async (id: string) => {
       id: true,
       fullName: true,
       email: true,
+      phoneNumber: true,
       role: true,
+      status: true,
+      describe: true,
+      city: true,
+      address: true,
       profile: true,
+      clientInfo: true,
     },
   });
   return user;
 };
-
 
 const updateUserRoleStatusIntoDB = async (id: string, role: UserRoleEnum) => {
   const result = await prisma.user.update({
@@ -91,7 +95,7 @@ const updateUserStatus = async (id: string, status: UserStatus) => {
   return result;
 };
 const updateUserApproval = async (userId: string) => {
-  console.log(userId)
+  console.log(userId);
   // const user = await prisma.user.findUnique({
   //   where: { id: userId },
   //   select: {
@@ -135,7 +139,6 @@ const hardDeleteUserIntoDB = async (id: string, adminId: string) => {
   // if (!adminUser) {
   //   throw new AppError(httpStatus.UNAUTHORIZED, 'You are not a admin');
   // }
-
   // return await prisma.$transaction(
   //   async tx => {
   //     // related tables delete
@@ -153,12 +156,10 @@ const hardDeleteUserIntoDB = async (id: string, adminId: string) => {
   //         OR: [{ followerId: id }, { followingId: id }],
   //       },
   //     });
-
   //     const deletedUser = await tx.user.delete({
   //       where: { id },
   //       select: { id: true, email: true },
   //     });
-
   //     return deletedUser;
   //   },
   //   {
@@ -166,6 +167,102 @@ const hardDeleteUserIntoDB = async (id: string, adminId: string) => {
   //     maxWait: 5000,
   //   },
   // );
+};
+
+const updateUserIntoDb = async (req: Request, id: string) => {
+  // Step 1️⃣: Check if user exists
+  const userInfo = await prisma.user.findUnique({
+    where: { id },
+  });
+
+  if (!userInfo) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found with id: ' + id);
+  }
+
+  // Step 2️⃣: Parse incoming data
+  const { fullName,  describe, city, address, phoneNumber } =
+    JSON.parse(req.body.data);
+
+  // Step 3️⃣: Handle file upload (optional)
+  const file = req.file as Express.Multer.File | undefined;
+  
+  let profileUrl: string | null = userInfo.profile;
+
+  if (file) {
+    const location = await uploadToDigitalOceanAWS(file);
+    profileUrl = location.Location;
+  }
+
+  // Step 4️⃣: Update user in DB
+  const result = await prisma.user.update({
+    where: { id },
+    data: {
+      fullName,
+      // businessType,
+      describe,
+      city,
+      address,
+      phoneNumber,
+      profile: profileUrl,
+    },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      profile: true,
+      role: true,
+      // businessType: true,
+      describe: true,
+      city: true,
+      address: true,
+      status: true,
+    },
+  });
+
+  if (!result) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to update user profile',
+    );
+  }
+
+  return result;
+};
+
+const updateMyProfileIntoDB = async (
+  id: string,
+  file: Express.Multer.File | undefined,
+  payload: Partial<User>,
+) => {
+  // Prevent updating sensitive fields
+  const { email, role, ...updateData } = payload;
+
+  let profileUrl: string | null = null;
+  if (file) {
+    const location = await uploadToDigitalOceanAWS(file);
+    profileUrl = location.Location;
+    updateData.profile = profileUrl;
+  }
+
+  // Always update (with or without file)
+  const result = await prisma.user.update({
+    where: { id },
+    data: updateData,
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      phoneNumber: true,
+      profile: true,
+      role: true,
+      status: true,
+      describe: true,
+      city: true,
+      address: true,
+    },
+  });
+
+  return result;
 };
 
 export const UserServices = {
@@ -177,4 +274,6 @@ export const UserServices = {
   updateUserApproval,
   softDeleteUserIntoDB,
   hardDeleteUserIntoDB,
+  updateUserIntoDb,
+  updateMyProfileIntoDB,
 };

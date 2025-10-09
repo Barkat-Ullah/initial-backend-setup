@@ -36,7 +36,11 @@ app.post(
 );
 
 // Root route (Better: JSON response with icon)
-
+//* app.get('/', (req: Request, res: Response) => {
+//   res.send({
+//     Message: 'The server is running. . .',
+//   });
+// });
 app.get('/', rootHandler);
 app.get('/health', serverHealth);
 

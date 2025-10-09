@@ -108,6 +108,70 @@ const registerWithOtpIntoDB = async (payload: User) => {
   return 'Please check mail to verify your email';
 };
 
+// ======================== COMMON OTP VERIFY (REGISTER + FORGOT) ========================
+const verifyOtpCommon = async (payload: { email: string; otp: string }) => {
+  const user = await prisma.user.findUnique({
+    where: { email: payload.email },
+    select: {
+      id: true,
+      email: true,
+      otp: true,
+      otpExpiry: true,
+      isEmailVerified: true,
+      fullName: true,
+      role: true,
+    },
+  });
+
+  if (!user) throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+
+  if (
+    !user.otp ||
+    user.otp !== payload.otp ||
+    !user.otpExpiry ||
+    new Date(user.otpExpiry).getTime() < Date.now()
+  ) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid or expired OTP');
+  }
+
+  let message = 'OTP verified successfully!';
+
+  // Registration case
+  if (!user.isEmailVerified) {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { otp: null, otpExpiry: null, isEmailVerified: true },
+    });
+    message = 'Email verified successfully!';
+  } else {
+    // Forgot password case
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { otp: null, otpExpiry: null },
+    });
+    message = 'OTP verified for password reset!';
+  }
+
+  const accessToken = await generateToken(
+    {
+      id: user.id,
+      name: user.fullName,
+      email: user.email,
+      role: user.role,
+    },
+    config.jwt.access_secret as Secret,
+    config.jwt.access_expires_in as SignOptions['expiresIn'],
+  );
+  return {
+    message,
+    accessToken,
+    id: user.id,
+    name: user.fullName,
+    email: user.email,
+    role: user.role,
+  };
+};
+
 // ======================== RESEND OTP ========================
 const resendVerificationWithOtp = async (email: string) => {
   const user = await insecurePrisma.user.findFirstOrThrow({ where: { email } });
@@ -212,51 +276,6 @@ const forgetPassword = async (email: string) => {
   } catch {
     throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send OTP');
   }
-};
-
-// ======================== COMMON OTP VERIFY (REGISTER + FORGOT) ========================
-const verifyOtpCommon = async (payload: { email: string; otp: string }) => {
-  const user = await prisma.user.findUnique({
-    where: { email: payload.email },
-    select: {
-      id: true,
-      email: true,
-      otp: true,
-      otpExpiry: true,
-      isEmailVerified: true,
-    },
-  });
-
-  if (!user) throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
-
-  if (
-    !user.otp ||
-    user.otp !== payload.otp ||
-    !user.otpExpiry ||
-    new Date(user.otpExpiry).getTime() < Date.now()
-  ) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid or expired OTP');
-  }
-
-  let message = 'OTP verified successfully!';
-
-  // Registration case
-  if (!user.isEmailVerified) {
-    await prisma.user.update({
-      where: { email: user.email },
-      data: { otp: null, otpExpiry: null, isEmailVerified: true },
-    });
-    message = 'Email verified successfully!';
-  } else {
-    // Forgot password case
-    await prisma.user.update({
-      where: { email: user.email },
-      data: { otp: null, otpExpiry: null },
-    });
-    message = 'OTP verified for password reset!';
-  }
-
-  return { message };
 };
 
 // ======================== RESET PASSWORD ========================

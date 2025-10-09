@@ -1,5 +1,4 @@
 import express from 'express';
-import { MessageRouters } from '../modules/Messages/message.route';
 import { NotificationsRouters } from '../modules/Notification/notification.route';
 import { AuthRouters } from '../modules/Auth/Auth.routes';
 import { UserRouters } from '../modules/User/user.routes';
@@ -25,10 +24,7 @@ const moduleRoutes = [
     path: '/follow',
     route: FollowRoutes,
   },
-  {
-    path: '/messages',
-    route: MessageRouters,
-  },
+ 
   {
     path: '/notifications',
     route: NotificationsRouters,
