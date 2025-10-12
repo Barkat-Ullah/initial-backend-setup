@@ -24,7 +24,6 @@ const moduleRoutes = [
     path: '/follow',
     route: FollowRoutes,
   },
- 
   {
     path: '/notifications',
     route: NotificationsRouters,

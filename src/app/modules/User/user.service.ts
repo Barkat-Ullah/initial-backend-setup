@@ -40,7 +40,7 @@ const getMyProfileFromDB = async (id: string) => {
       city: true,
       address: true,
       profile: true,
-      clientInfo: true,
+      
     },
   });
 

@@ -78,7 +78,7 @@ const verifyOtpCommon = catchAsync(async (req, res) => {
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
-    message: 'OTP has been verified',
+    message: result.message,
     data: result,
   });
 });

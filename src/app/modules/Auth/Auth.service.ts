@@ -136,40 +136,45 @@ const verifyOtpCommon = async (payload: { email: string; otp: string }) => {
 
   let message = 'OTP verified successfully!';
 
-  // Registration case
-  if (!user.isEmailVerified) {
+  if (user.isEmailVerified === false) {
     await prisma.user.update({
       where: { email: user.email },
       data: { otp: null, otpExpiry: null, isEmailVerified: true },
     });
-    message = 'Email verified successfully!';
-  } else {
-    // Forgot password case
-    await prisma.user.update({
-      where: { email: user.email },
-      data: { otp: null, otpExpiry: null },
-    });
-    message = 'OTP verified for password reset!';
-  }
 
-  const accessToken = await generateToken(
-    {
+    message = 'Email verified successfully!';
+
+    // Generate access token for registration flow
+    const accessToken = await generateToken(
+      {
+        id: user.id,
+        name: user.fullName,
+        email: user.email,
+        role: user.role,
+      },
+      config.jwt.access_secret as Secret,
+      config.jwt.access_expires_in as SignOptions['expiresIn'],
+    );
+
+    return {
+      message,
+      accessToken,
       id: user.id,
       name: user.fullName,
       email: user.email,
       role: user.role,
-    },
-    config.jwt.access_secret as Secret,
-    config.jwt.access_expires_in as SignOptions['expiresIn'],
-  );
-  return {
-    message,
-    accessToken,
-    id: user.id,
-    name: user.fullName,
-    email: user.email,
-    role: user.role,
-  };
+    };
+  }
+  // Step 5: Handle forgot password case
+  else {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { otp: null, otpExpiry: null },
+    });
+
+    message = 'OTP verified for password reset!';
+    return { message };
+  }
 };
 
 // ======================== RESEND OTP ========================
