@@ -21,9 +21,13 @@ const loginWithOtpFromDB = async (
   res: Response,
   payload: { email: string; password: string },
 ) => {
-  const userData = await insecurePrisma.user.findUniqueOrThrow({
+  const userData = await insecurePrisma.user.findUnique({
     where: { email: payload.email },
   });
+
+    if (!userData) {
+      throw new AppError(401, 'User not found');
+    }
 
   const isCorrectPassword = await bcrypt.compare(
     payload.password,
@@ -179,8 +183,10 @@ const verifyOtpCommon = async (payload: { email: string; otp: string }) => {
 
 // ======================== RESEND OTP ========================
 const resendVerificationWithOtp = async (email: string) => {
-  const user = await insecurePrisma.user.findFirstOrThrow({ where: { email } });
-
+  const user = await insecurePrisma.user.findFirst({ where: { email } });
+  if (!user) {
+    throw new AppError(401, 'User not found');
+  }
   if (user.status === UserStatus.SUSPENDED) {
     throw new AppError(httpStatus.FORBIDDEN, 'User is Suspended');
   }
@@ -213,9 +219,13 @@ const resendVerificationWithOtp = async (email: string) => {
 
 // ======================== CHANGE PASSWORD ========================
 const changePassword = async (user: any, payload: any) => {
-  const userData = await insecurePrisma.user.findUniqueOrThrow({
+  const userData = await insecurePrisma.user.findUnique({
     where: { email: user.email, status: 'ACTIVE' },
   });
+
+    if (!userData) {
+      throw new AppError(401, 'User not found');
+    }
 
   const isCorrectPassword = await bcrypt.compare(
     payload.oldPassword,
@@ -236,11 +246,13 @@ const changePassword = async (user: any, payload: any) => {
 
 // ======================== FORGOT PASSWORD ========================
 const forgetPassword = async (email: string) => {
-  const userData = await prisma.user.findUniqueOrThrow({
+  const userData = await prisma.user.findUnique({
     where: { email },
     select: { email: true, status: true, id: true, otpExpiry: true, otp: true },
   });
-
+  if (!userData) {
+    throw new AppError(401, 'User not found');
+  }
   if (userData.status === UserStatus.SUSPENDED) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User has been suspended');
   }

@@ -25,7 +25,7 @@ const getAllUsersFromDB = async (query: any) => {
 };
 
 const getMyProfileFromDB = async (id: string) => {
-  const Profile = await prisma.user.findUniqueOrThrow({
+  const Profile = await prisma.user.findUnique({
     where: {
       id: id,
     },
@@ -40,7 +40,6 @@ const getMyProfileFromDB = async (id: string) => {
       city: true,
       address: true,
       profile: true,
-      
     },
   });
 
