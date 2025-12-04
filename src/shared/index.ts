@@ -6,8 +6,9 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import catchAsync from '../app/utils/catchAsync';
 import AppError from '../app/errors/AppError';
-import { uploadToDigitalOceanAWS } from '../app/utils/uploadToDigitalOceanAWS';
+
 import { prisma } from '../app/utils/prisma';
+import { fileUploader } from '../app/utils/fileUploader';
 
 
 
@@ -79,7 +80,7 @@ export const imageUpload = catchAsync(async (req: Request, res: Response) => {
   }
 
   const file = req.file;
-  const location = await uploadToDigitalOceanAWS(file);
+  const location = await fileUploader.uploadToDigitalOcean(file);
   const imageUrl = location.Location;
 
   res.status(httpStatus.OK).json({ success: true, imageUrl });

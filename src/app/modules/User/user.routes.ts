@@ -4,7 +4,7 @@ import { UserControllers } from './user.controller';
 import validateRequest from '../../middlewares/validateRequest';
 import { userValidation } from './user.validation';
 import { UserRoleEnum } from '@prisma/client';
-import { upload } from '../../utils/fileUploader';
+import { fileUploader } from '../../utils/fileUploader';
 
 const router = express.Router();
 
@@ -27,7 +27,6 @@ router.delete(
   UserControllers.hardDeleteUser,
 );
 
-
 router.put(
   '/user-role/:id',
   auth(UserRoleEnum.ADMIN),
@@ -49,7 +48,7 @@ router.put(
 
 router.put(
   '/update-user/:id',
-  upload.single('file'),
+  fileUploader.uploadSingle, // "image"
   auth(UserRoleEnum.ADMIN),
   validateRequest.body(userValidation.updateUser),
   UserControllers.updateUser,
@@ -58,7 +57,7 @@ router.put(
 router.put(
   '/update-profile',
   auth(UserRoleEnum.ADMIN, UserRoleEnum.USER),
-  upload.single('file'),
+  fileUploader.uploadSingle, // "image"
   UserControllers.updateMyProfile,
 );
 

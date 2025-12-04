@@ -1,19 +1,19 @@
-export interface IOptionsResult {
+type IOptions = {
+  page?: number;
+  limit?: number;
+  sortOrder?: string;
+  sortBy?: string;
+};
+
+type IOptionsResult = {
   page: number;
   limit: number;
   skip: number;
   sortBy: string;
   sortOrder: string;
-}
+};
 
-interface IOptions {
-  page?: number;
-  limit?: number;
-  sortOrder?: string;
-  sortBy?: string;
-}
-
-export const calculatePagination = (options: IOptions): IOptionsResult => {
+const calculatePagination = (options: IOptions): IOptionsResult => {
   const page: number = Number(options.page) || 1;
   const limit: number = Number(options.limit) || 10;
   const skip: number = (Number(page) - 1) * limit;
@@ -28,4 +28,8 @@ export const calculatePagination = (options: IOptions): IOptionsResult => {
     sortBy,
     sortOrder,
   };
+};
+
+export const paginationHelper = {
+  calculatePagination,
 };

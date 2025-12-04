@@ -26,15 +26,22 @@ model User {
   isDeleted       Boolean @default(false)
 
   stripeCustomerId String?
+  fcmToken         String?
 
-  payments      Payment[]
-  notifications NotificationUser[]
+  payments Payment[]
 
-  followers Follow[] @relation("Followers")
-  following Follow[] @relation("Following")
+  receiver  Notification[] @relation("Receiver")
+  sender    Notification[] @relation("Sender")
+  followers Follow[]       @relation("Followers")
+  following Follow[]       @relation("Following")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  roomSender   Room[]   @relation("RoomSender")
+  roomReceiver Room[]   @relation("RoomReceiver")
+
+  sentChats     Chat[] @relation("ChatSender")
+  receivedChats Chat[] @relation("ChatReceiver")
 
   @@map("users")
 }

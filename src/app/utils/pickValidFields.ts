@@ -1,6 +1,6 @@
-const pickValidFields = <T extends Record<string, unknown>, k extends keyof T>(
+const pick = <T extends Record<string, unknown>, k extends keyof T>(
   obj: T,
-  keys: k[]
+  keys: k[],
 ): Partial<T> => {
   const finalObj: Partial<T> = {};
 
@@ -13,4 +13,4 @@ const pickValidFields = <T extends Record<string, unknown>, k extends keyof T>(
   return finalObj;
 };
 
-export default pickValidFields;
+export default pick;

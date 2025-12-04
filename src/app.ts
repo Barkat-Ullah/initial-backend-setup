@@ -2,7 +2,7 @@ import express, { Application } from 'express';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import router from './app/routes';
 import auth from './app/middlewares/auth';
-import { upload } from './app/utils/fileUploader';
+
 import {
   apiLimiter,
   imageUpload,
@@ -12,6 +12,7 @@ import {
 } from './shared';
 
 import { rootHandler } from './shared/rootHandler';
+import { fileUploader } from './app/utils/fileUploader';
 // import { StripeWebHook } from './app/utils/StripeUtils';
 
 const app: Application = express();
@@ -31,7 +32,7 @@ app.post(
 app.post(
   '/api/v1/upload-image',
   auth('ANY'),
-  upload.single('image'),
+  fileUploader.uploadSingle, // "image",
   imageUpload,
 );
 

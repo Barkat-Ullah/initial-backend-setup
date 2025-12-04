@@ -5,7 +5,7 @@ import { prisma } from '../../utils/prisma';
 
 import { Request } from 'express';
 import AppError from '../../errors/AppError';
-import { uploadToDigitalOceanAWS } from '../../utils/uploadToDigitalOceanAWS';
+import { fileUploader } from '../../utils/fileUploader';
 
 interface UserWithOptionalPassword extends Omit<User, 'password'> {
   password?: string;
@@ -188,7 +188,7 @@ const updateUserIntoDb = async (req: Request, id: string) => {
   let profileUrl: string | null = userInfo.profile;
 
   if (file) {
-    const location = await uploadToDigitalOceanAWS(file);
+    const location = await fileUploader.uploadToDigitalOcean(file);
     profileUrl = location.Location;
   }
 
@@ -238,7 +238,7 @@ const updateMyProfileIntoDB = async (
 
   let profileUrl: string | null = null;
   if (file) {
-    const location = await uploadToDigitalOceanAWS(file);
+    const location = await fileUploader.uploadToDigitalOcean(file);
     profileUrl = location.Location;
     updateData.profile = profileUrl;
   }
