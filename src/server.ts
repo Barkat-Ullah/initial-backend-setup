@@ -1,9 +1,9 @@
 import { createServer, Server as HTTPServer } from 'http';
 import app from './app';
 import config from './config';
+// import { initiateSuperAdmin } from './app/db/db';
 
 // import { setupWebSocket } from './app/middlewares/webSocket';
-// import seedSuperAdmin from './app/DB';
 
 const port = config.port || 5000;
 
@@ -16,7 +16,7 @@ async function main() {
   try {
     // Seed data (await to ensure completion before listen)
     // console.log('🌱 Seeding super admin data...');
-    // await seedSuperAdmin();
+    // await initiateSuperAdmin();
  
     console.log(`🚀 Starting server on port ${port}...`);
     server.listen(port, () => {
