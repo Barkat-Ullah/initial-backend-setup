@@ -24,18 +24,6 @@ export const createNotification = async (params: CreateNotificationParams) => {
           id: true,
           email: true,
           role: true,
-          founder: {
-            select: {
-              fullName: true,
-              profile: true,
-            },
-          },
-          seeder: {
-            select: {
-              fullName: true,
-              profile: true,
-            },
-          },
         },
       },
     },

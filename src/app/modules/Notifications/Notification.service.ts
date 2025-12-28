@@ -171,9 +171,13 @@ const sendNotifications = async (req: any) => {
       data: notificationData,
     });
 
+    // const failedTokens = response.responses
+    //   .map((res: any, idx: number) => (!res.success ? fcmTokens[idx] : null))
+    //   .filter((token: string): token is string => token !== null);
+    
     const failedTokens = response.responses
       .map((res: any, idx: number) => (!res.success ? fcmTokens[idx] : null))
-      .filter((token: string): token is string => token !== null);
+      .filter((token): token is string => token !== null);
 
     return {
       successCount: response.successCount,

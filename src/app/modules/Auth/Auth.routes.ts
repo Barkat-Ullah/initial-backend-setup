@@ -11,7 +11,7 @@ const router = express.Router();
 router.post(
   '/login',
 
-  validateRequest.body(authValidation.loginUser),
+  // validateRequest.body(authValidation.loginUser),
   AuthControllers.loginWithOtp,
 );
 
@@ -33,13 +33,13 @@ router.post(
 
 router.post(
   '/forget-password',
-  validateRequest.body(authValidation.forgetPasswordValidationSchema),
+  // validateRequest.body(authValidation.forgetPasswordValidationSchema),
   AuthControllers.forgetPassword,
 );
 
 router.post(
   '/reset-password',
-  validateRequest.body(authValidation.resetPasswordValidationSchema),
+  // validateRequest.body(authValidation.resetPasswordValidationSchema),
   AuthControllers.resetPassword,
 );
 

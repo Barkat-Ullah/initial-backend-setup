@@ -11,16 +11,16 @@ const templates = moduleName => {
   return {
     controller: `
 import httpStatus from 'http-status';
-import { testService } from './test.service';
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import pick from '../../utils/pickValidFields';
+import { ${moduleName}Service } from './${moduleName}.service';
 
 // create ${Capitalized}
 const create${Capitalized} = catchAsync(async (req: Request, res: Response) => {
-  const data = req.body;
-  const result = await ${moduleName}Service.create${Capitalized}(data);
+
+  const result = await ${moduleName}Service.create${Capitalized}(req);
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -43,7 +43,8 @@ const get${Capitalized}List = catchAsync(async (req: Request, res: Response) => 
     statusCode: httpStatus.OK,
     success: true,
     message: '${Capitalized} list retrieved successfully',
-    data: result,
+    data: result.data,
+    meta: result.meta,
   });
 });
 
@@ -94,16 +95,17 @@ export const ${moduleName}Controller = {
 `,
 
     service: `
-import { Prisma } from "@prisma/client";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { prisma } from "../../utils/prisma";
 import ApiError from '../../errors/AppError';
 import httpStatus from 'http-status';
 import { paginationHelper } from "../../utils/calculatePagination";
 import { Prisma } from "@prisma/client";
+import { Request } from 'express';
 
 // create ${Capitalized}
-const create${Capitalized} = async (data: any) => {
+const create${Capitalized} = async (req:Request) => {
+  const data = req.body
   const result = await prisma.${moduleName}.create({ data });
   return result;
 };
@@ -114,7 +116,7 @@ type I${Capitalized}FilterRequest = {
   id?: string;
   createdAt?: string;
 }
-const ${moduleName}SearchAbleFields = ['fullName', 'email', 'userName'];
+const ${moduleName}SearchAbleFields = ['fullName', 'email'];
 
 const get${Capitalized}ListIntoDb = async (options: IPaginationOptions, filters: I${Capitalized}FilterRequest) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
@@ -203,7 +205,7 @@ const get${Capitalized}ListIntoDb = async (options: IPaginationOptions, filters:
 // get ${Capitalized} by id
 const get${Capitalized}ById = async (id: string) => {
   const result = await prisma.${moduleName}.findUnique({
-   where: { id } 
+   where: { id }
    });
   if (!result) {
     throw new ApiError(httpStatus.NOT_FOUND, '${Capitalized} not found');
@@ -213,7 +215,7 @@ const get${Capitalized}ById = async (id: string) => {
 
 // update ${Capitalized}
 const update${Capitalized}IntoDb = async (id: string, data: any) => {
-  const result = await prisma.${moduleName}.update({ 
+  const result = await prisma.${moduleName}.update({
   where: { id }, data });
   return result;
 };
