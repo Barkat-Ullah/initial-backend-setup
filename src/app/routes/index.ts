@@ -4,7 +4,6 @@ import { UserRouters } from '../modules/User/user.routes';
 import { PaymentRoutes } from '../modules/Payment/payment.route';
 import { FollowRoutes } from '../modules/follow/follow.routes';
 import { notificationsRoute } from '../modules/Notifications/Notification.routes';
-import { testRoutes } from "../modules/test/test.routes";
 
 
 const router = express.Router();
@@ -31,11 +30,6 @@ const moduleRoutes = [
     route: notificationsRoute,
   },
 
-
-  {
-    path: "/tests",
-    route: testRoutes,
-  },
 ];
 
 moduleRoutes.forEach(route => router.use(route.path, route.route));
