@@ -190,8 +190,8 @@ import pick from '../../utils/pickValidFields';
 
 // create ${Capitalized}
 const create${Capitalized} = catchAsync(async (req: Request, res: Response) => {
-  const data = req.body;
-  const result = await ${moduleName}Service.create${Capitalized}(data);
+
+  const result = await ${moduleName}Service.create${Capitalized}(req);
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -233,9 +233,8 @@ const get${Capitalized}ById = catchAsync(async (req: Request, res: Response) => 
 
 // update ${Capitalized}
 const update${Capitalized} = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const data = req.body;
-  const result = await ${moduleName}Service.update${Capitalized}(id, data);
+
+  const result = await ${moduleName}Service.update${Capitalized}(req);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -266,18 +265,28 @@ export const ${moduleName}Controller = {
 `.trim(),
 
     service: `
-import httpStatus from "http-status";
-import { Prisma } from "@prisma/client";
-import prisma from "../../utils/prisma";
-import { IPaginationOptions } from "../../interface/pagination.type";
-import { paginationHelper } from "../../utils/calculatePagination";
-import ApiError from "../../errors/AppError";
-import { Request } from "express";
+import httpStatus from 'http-status';
+import { Prisma } from '@prisma/client';
+import prisma from '../../utils/prisma';
+import { IPaginationOptions } from '../../interface/pagination.type';
+import { paginationHelper } from '../../utils/calculatePagination';
+import ApiError from '../../errors/AppError';
+import { Request } from 'express';
+import { fileUploader } from '../../utils/fileUploader';
 
 // create ${Capitalized}
 const create${Capitalized} = async (req: Request) => {
+  const data = req.body.data ? JSON.parse(req.body.data) : {};
+  const file = req.file;
+  let image;
+
+  if (file) {
+    image = (await fileUploader.uploadToCloudinary(file)).Location;
+  }
+
+  const addedData = { ...data, image };
   const result = await prisma.${moduleName}.create({
-    data:req.body
+    data:addedData
   });
   return result;
 };
@@ -362,7 +371,9 @@ const get${Capitalized}ById = async (id: string) => {
 };
 
 // update ${Capitalized}
-const update${Capitalized} = async (id: string, data: any) => {
+const update${Capitalized} = async (req:Request) => {
+  const { id } = req.params;
+  const data = req.body;
   const existing${Capitalized} = await prisma.${moduleName}.findUnique({ where: { id } });
   if (!existing${Capitalized}) {
     throw new ApiError(httpStatus.NOT_FOUND, '${Capitalized} not found');
@@ -399,12 +410,14 @@ import auth from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
 import { ${moduleName}Controller } from './${moduleName}.controller';
 import { ${moduleName}Validation } from './${moduleName}.validation';
+import { fileUploader } from '../../utils/fileUploader';
 
 const router = express.Router();
 
 router.post(
   '/',
   auth(),
+  fileUploader.uploadSingle,
   validateRequest.body(${moduleName}Validation.createSchema),
   ${moduleName}Controller.create${Capitalized}
 );

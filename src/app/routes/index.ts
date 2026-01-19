@@ -5,7 +5,6 @@ import { PaymentRoutes } from '../modules/Payment/payment.route';
 import { FollowRoutes } from '../modules/follow/follow.routes';
 import { notificationsRoute } from '../modules/Notifications/Notification.routes';
 
-
 const router = express.Router();
 
 const moduleRoutes = [
