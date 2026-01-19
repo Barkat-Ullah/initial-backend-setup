@@ -278,7 +278,7 @@ const forgetPassword = async (email: string) => {
 
       try {
         const html = generateOtpEmail(otp);
-        await emailSender(userData.email, html, 'OTP Verification');
+        await sendOtpViaMail(userData.email, html, 'OTP Verification');
       } catch {
         await tx.user.update({
           where: { email },
