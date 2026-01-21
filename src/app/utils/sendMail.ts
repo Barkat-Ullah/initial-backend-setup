@@ -31,6 +31,36 @@ export const generateOtpEmail = (otp: string) => {
       </div>`;
 };
 
+// const emailSender = async (to: string, html: string, subject: string) => {
+//   try {
+//     const transporter = nodemailer.createTransport({
+//       host: 'smtp.gmail.com',
+//       port: 587,
+//       secure: false,
+//       auth: {
+//         user: 'barkatullah585464@gmail.com',
+//         pass: 'exqd dajc qett edwx',
+//       },
+//       tls: {
+//         rejectUnauthorized: false,
+//       },
+//     });
+
+//     const mailOptions = {
+//       from: '"Imani" <barkatullah585464@gmail.com>',
+//       to,
+//       subject,
+//       html,
+//     };
+
+//     const info = await transporter.sendMail(mailOptions);
+//     return info.messageId;
+//   } catch (error) {
+//     console.error('Email sending failed:', error);
+//     throw new Error('Failed to send email. Please try again later.');
+//   }
+// };
+
 const emailSender = async (to: string, html: string, subject: string) => {
   try {
     const transporter = nodemailer.createTransport({
